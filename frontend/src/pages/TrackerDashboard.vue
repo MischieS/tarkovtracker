@@ -1,0 +1,369 @@
+<template>
+  <v-container class="mt-2 d-flex flex-column" style="min-height: calc(100vh - 250px)">
+    <v-row justify="center" class="stats-row">
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
+        <tracker-stat icon="mdi-progress-check">
+          <template #stat>
+            {{ t('page.dashboard.stats.allTasks.stat') }}
+          </template>
+          <template #value> {{ completedTasks }}/{{ totalTasks }} </template>
+          <template #percentage>
+            {{ totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : '0.0' }}%
+          </template>
+          <template #details>
+            {{ t('page.dashboard.stats.allTasks.details') }}
+          </template>
+        </tracker-stat>
+      </v-col>
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
+        <tracker-stat icon="mdi-briefcase-search">
+          <template #stat>
+            {{ t('page.dashboard.stats.allObjectives.stat') }}
+          </template>
+          <template #value> {{ completedObjectives }}/{{ totalObjectives }} </template>
+          <template #percentage>
+            {{
+              totalObjectives > 0
+                ? ((completedObjectives / totalObjectives) * 100).toFixed(1)
+                : '0.0'
+            }}%
+          </template>
+          <template #details>
+            {{ t('page.dashboard.stats.allObjectives.details') }}
+          </template>
+        </tracker-stat>
+      </v-col>
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
+        <tracker-stat icon="mdi-briefcase-search">
+          <template #stat>
+            {{ t('page.dashboard.stats.taskItems.stat') }}
+          </template>
+          <template #value> {{ completedTaskItems }}/{{ totalTaskItems }} </template>
+          <template #percentage>
+            {{
+              totalTaskItems > 0 ? ((completedTaskItems / totalTaskItems) * 100).toFixed(1) : '0.0'
+            }}%
+          </template>
+          <template #details>
+            {{ t('page.dashboard.stats.taskItems.details') }}
+          </template>
+        </tracker-stat>
+      </v-col>
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
+        <tracker-stat icon="mdi-trophy">
+          <template #stat>
+            {{ t('page.dashboard.stats.kappaTasks.stat') }}
+          </template>
+          <template #value> {{ completedKappaTasks }}/{{ totalKappaTasks }} </template>
+          <template #percentage>
+            {{
+              totalKappaTasks > 0
+                ? ((completedKappaTasks / totalKappaTasks) * 100).toFixed(1)
+                : '0.0'
+            }}%
+          </template>
+          <template #details>
+            {{ t('page.dashboard.stats.kappaTasks.details') }}
+          </template>
+        </tracker-stat>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+<script setup>
+  import { useTarkovData } from '@/composables/tarkovdata';
+  import { useProgressStore } from '@/stores/progress';
+  import { useTarkovStore } from '@/stores/tarkov';
+  import { computed, defineAsyncComponent } from 'vue';
+  import { useI18n } from 'vue-i18n';
+  const { t } = useI18n({ useScope: 'global' });
+  const TrackerStat = defineAsyncComponent(() => import('@/features/dashboard/TrackerStat'));
+  const { tasks, objectives } = useTarkovData();
+  const progressStore = useProgressStore();
+  const tarkovStore = useTarkovStore();
+  const neededItemTaskObjectives = computed(() => {
+    if (!objectives || !objectives.value) {
+      return [];
+    }
+    // Filter objectives to include only those that involve items relevant for counting
+    const itemObjectiveTypes = [
+      'giveItem',
+      'findItem',
+      'findQuestItem',
+      'giveQuestItem',
+      'plantQuestItem',
+      'plantItem',
+      'buildWeapon',
+    ];
+    return objectives.value.filter((obj) => obj && itemObjectiveTypes.includes(obj.type));
+  });
+  const totalTasks = computed(() => {
+    if (!tasks.value) {
+      return 0; // Return 0 if tasks data isn't loaded yet
+    }
+    let relevantTasks = tasks.value.filter(
+      (task) =>
+        // Ensure task exists and has factionName before filtering
+        task && (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction)
+    ).length;
+    // Find all tasks with alternatives and subtract n-1 from the total
+    // Ensure tasks.value exists before filtering
+    let tasksWithAlternatives = tasks.value
+      ? tasks.value.filter(
+          // Ensure task exists and has alternatives before checking length
+          (task) => task && task.alternatives && task.alternatives.length > 0
+        )
+      : []; // Default to empty array if tasks.value is null
+    // Ensure tasksWithAlternatives is valid before iterating
+    if (tasksWithAlternatives && tasksWithAlternatives.length > 0) {
+      tasksWithAlternatives.forEach((task) => {
+        // Ensure task and alternatives exist
+        if (task && task.alternatives) {
+          relevantTasks -= task.alternatives.length - 1;
+          // Ensure alternatives exist before iterating
+          if (task.alternatives.length > 0) {
+            task.alternatives.forEach((alternative) => {
+              tasksWithAlternatives = tasksWithAlternatives.filter(
+                (t) => t && t.id != alternative // Ensure iterated task 't' exists
+              );
+            });
+          }
+        }
+      });
+    }
+    return relevantTasks;
+  });
+  const totalObjectives = computed(() => {
+    if (!tasks.value) {
+      // Check if tasks data is loaded
+      return 0;
+    }
+    let total = 0;
+    tasks.value
+      .filter(
+        (task) =>
+          // Ensure task exists before filtering
+          task && (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction)
+      )
+      .forEach((task) => {
+        // Check if task and task.objectives exist before accessing length
+        if (task && task.objectives) {
+          total += task.objectives.length;
+        }
+      });
+    return total;
+  });
+  const completedObjectives = computed(() => {
+    if (!objectives || !objectives.value || !tarkovStore) {
+      return 0;
+    }
+    return objectives.value.filter(
+      (objective) =>
+        // Ensure objective and its id exist before checking completion
+        objective && objective.id && tarkovStore.isTaskObjectiveComplete(objective.id)
+    ).length;
+  });
+  const completedTasks = computed(() => {
+    // Check if progressStore.tasksCompletions exists before getting values
+    if (!progressStore.tasksCompletions) {
+      return 0;
+    }
+    return Object.values(progressStore.tasksCompletions).filter(
+      (task) => task && task.self === true // Ensure task exists before checking self property
+    ).length;
+  });
+  const completedTaskItems = computed(() => {
+    // Restore the original guard and logic
+    if (
+      !neededItemTaskObjectives.value || // Use neededItemTaskObjectives here
+      !tasks.value ||
+      !progressStore.tasksCompletions ||
+      !progressStore.objectiveCompletions ||
+      !tarkovStore
+    ) {
+      return 0; // Return 0 if data isn't loaded yet
+    }
+    let total = 0;
+    neededItemTaskObjectives.value.forEach((objective) => {
+      // Iterate over neededItemTaskObjectives
+      // Ensure objective exists before proceeding
+      if (!objective) return;
+      // Check for item and item.id
+      if (
+        objective.item &&
+        [
+          '5696686a4bdc2da3298b456a',
+          '5449016a4bdc2d6f028b456f',
+          '569668774bdc2da2298b4568',
+        ].includes(objective.item.id)
+      ) {
+        return;
+      }
+      let relatedTask = tasks.value.find(
+        (task) => task && objective.taskId && task.id === objective.taskId
+      );
+      const currentPMCFaction = tarkovStore.getPMCFaction;
+      if (
+        !relatedTask ||
+        !relatedTask.factionName ||
+        currentPMCFaction === undefined ||
+        (relatedTask.factionName != 'Any' && relatedTask.factionName != currentPMCFaction)
+      ) {
+        return;
+      }
+      if (!objective.id || !objective.taskId) return;
+      const taskCompletion = progressStore.tasksCompletions[objective.taskId];
+      const objectiveCompletion = progressStore.objectiveCompletions[objective.id];
+      if (
+        (taskCompletion && taskCompletion['self']) ||
+        (objectiveCompletion && objectiveCompletion['self']) ||
+        (objective.count &&
+          objective.id &&
+          objective.count <= tarkovStore.getObjectiveCount(objective.id))
+      ) {
+        total += objective.count || 1;
+      } else {
+        if (objective.id) {
+          total += tarkovStore.getObjectiveCount(objective.id);
+        }
+      }
+    });
+    return total;
+  });
+  const totalTaskItems = computed(() => {
+    if (!objectives || !objectives.value || !tasks.value || !tarkovStore) {
+      return 0;
+    }
+    let total = 0;
+    neededItemTaskObjectives.value.forEach((objective) => {
+      // Iterate over neededItemTaskObjectives
+      // Ensure objective exists before proceeding
+      if (!objective) return;
+      // Check for item and item.id
+      if (
+        objective.item &&
+        [
+          '5696686a4bdc2da3298b456a',
+          '5449016a4bdc2d6f028b456f',
+          '569668774bdc2da2298b4568',
+        ].includes(objective.item.id)
+      ) {
+        return;
+      }
+      let relatedTask = tasks.value.find(
+        (task) => task && objective.taskId && task.id === objective.taskId
+      );
+      const currentPMCFaction = tarkovStore.getPMCFaction;
+      if (
+        !relatedTask ||
+        !relatedTask.factionName ||
+        currentPMCFaction === undefined ||
+        (relatedTask.factionName != 'Any' && relatedTask.factionName != currentPMCFaction)
+      ) {
+        return;
+      }
+      if (objective.count) {
+        total += objective.count;
+      } else {
+        total += 1;
+      }
+    });
+    return total;
+  });
+  const totalKappaTasks = computed(() => {
+    if (!tasks.value) {
+      return 0;
+    }
+    return tasks.value.filter(
+      (task) =>
+        task &&
+        task.kappaRequired === true &&
+        (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction)
+    ).length;
+  });
+  const completedKappaTasks = computed(() => {
+    if (!tasks.value || !progressStore.tasksCompletions) {
+      return 0;
+    }
+    return tasks.value.filter(
+      (task) =>
+        task &&
+        task.kappaRequired === true &&
+        (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction) &&
+        progressStore.tasksCompletions[task.id] &&
+        progressStore.tasksCompletions[task.id].self === true
+    ).length;
+  });
+
+</script>
+<style lang="scss" scoped>
+  .stats-row {
+    margin: 0 -8px; // Offset the column padding
+  }
+
+  .stats-col {
+    padding: 8px;
+
+    // Remove the flex and height constraints that are making cards too tall
+    :deep(.v-sheet) {
+      height: auto;
+      min-height: auto;
+    }
+  }
+
+  // Better responsive behavior
+  @media (max-width: 600px) {
+    .stats-col {
+      padding: 4px;
+      margin-bottom: 8px;
+    }
+  }
+
+  @media (min-width: 600px) and (max-width: 960px) {
+    .stats-col {
+      &:nth-child(odd) {
+        padding-right: 4px;
+      }
+      &:nth-child(even) {
+        padding-left: 4px;
+      }
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .stats-row {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  }
+
+  .announcement-alert,
+  .project-status-alert {
+    :deep(.v-alert__content) {
+      padding: 8px 0;
+    }
+
+    :deep(.v-alert-title) {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+  }
+
+  // Make it even more compact on mobile
+  @media (max-width: 600px) {
+    .announcement-alert,
+    .project-status-alert {
+      :deep(.v-alert__content) {
+        padding: 6px 0;
+      }
+
+      .text-body-2 {
+        font-size: 0.8rem;
+      }
+
+      .d-flex {
+        font-size: 0.75rem !important;
+      }
+    }
+  }
+</style>

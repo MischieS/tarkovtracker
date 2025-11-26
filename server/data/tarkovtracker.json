@@ -1,0 +1,72 @@
+{
+  "users": [
+    {
+      "id": "c607166f-debf-4a6b-b652-ba292bde0311",
+      "username": "testuser",
+      "passwordHash": "$2a$10$lyxY83QSoVoT0fFE.RB7MO5NZPN21/e0GHuBJq1O5aP0dzrF82Iru",
+      "displayName": "testuser",
+      "createdAt": "2025-11-26T03:10:15.948Z"
+    },
+    {
+      "id": "2b434905-c3ad-4a06-b8c8-e1792472561a",
+      "username": "misi",
+      "passwordHash": "$2a$10$pcxonWMVMA2iIwKA2IVFReENiva/Vmljszm16eDIpfUOXgWHy1N0y",
+      "displayName": "Misi",
+      "createdAt": "2025-11-26T03:32:11.631Z"
+    },
+    {
+      "id": "2c5fc190-6d21-43a5-b1f6-52a6ff111741",
+      "username": "test",
+      "passwordHash": "$2a$10$zvt2ULFEcjHgLldUQQHKpOLLz3rzEfIM5fqKKE/0CHrCorcg/7rk.",
+      "displayName": "test",
+      "createdAt": "2025-11-26T14:44:14.009Z"
+    }
+  ],
+  "teams": [
+    {
+      "id": "01c2c5c9",
+      "name": "aa",
+      "ownerId": "2b434905-c3ad-4a06-b8c8-e1792472561a",
+      "createdAt": "2025-11-26T14:42:58.913Z"
+    }
+  ],
+  "teamMembers": [
+    {
+      "teamId": "01c2c5c9",
+      "userId": "2b434905-c3ad-4a06-b8c8-e1792472561a",
+      "joinedAt": "2025-11-26T14:42:58.913Z"
+    },
+    {
+      "teamId": "01c2c5c9",
+      "userId": "2c5fc190-6d21-43a5-b1f6-52a6ff111741",
+      "joinedAt": "2025-11-26T14:44:20.567Z"
+    }
+  ],
+  "taskProgress": {
+    "c607166f-debf-4a6b-b652-ba292bde0311": {
+      "tasks": {}
+    },
+    "2b434905-c3ad-4a06-b8c8-e1792472561a": {
+      "tasks": {}
+    },
+    "2c5fc190-6d21-43a5-b1f6-52a6ff111741": {
+      "tasks": {}
+    }
+  },
+  "hideoutProgress": {
+    "c607166f-debf-4a6b-b652-ba292bde0311": {
+      "modules": {}
+    },
+    "2b434905-c3ad-4a06-b8c8-e1792472561a": {
+      "modules": {}
+    },
+    "2c5fc190-6d21-43a5-b1f6-52a6ff111741": {
+      "modules": {}
+    }
+  },
+  "userSettings": {
+    "c607166f-debf-4a6b-b652-ba292bde0311": {},
+    "2b434905-c3ad-4a06-b8c8-e1792472561a": {},
+    "2c5fc190-6d21-43a5-b1f6-52a6ff111741": {}
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "private": true,
+  "name": "tarkov-tracker-monorepo",
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "server"
+  ],
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=server\"",
+    "build": "npm run build --workspace=frontend",
+    "start": "npm run start --workspace=server",
+    "lint": "eslint .",
+    "format": "prettier --write --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"server/**/*.js\"",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"server/**/*.js\"",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "deps": "npx taze --r --I"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.3.0",
+    "globals": "^16.3.0",
+    "taze": "^19.1.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vue-eslint-parser": "^10.2.0"
+  }
+}
