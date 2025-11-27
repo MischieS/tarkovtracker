@@ -11,9 +11,11 @@
     "last 2 versions"
   ],
   "scripts": {
+    "setup": "npm install",
     "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=server\"",
     "build": "npm run build --workspace=frontend",
     "start": "npm run start --workspace=server",
+    "serve": "npm run build && npm run start",
     "lint": "eslint .",
     "format": "prettier --write --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"server/**/*.js\"",
     "format:check": "prettier --check --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"server/**/*.js\"",

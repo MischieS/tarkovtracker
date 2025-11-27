@@ -1,5 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 import { register, login, authMiddleware, getProfile, updateProfile } from './auth.js';
 import {
   getTaskProgressForUser,
@@ -26,7 +32,7 @@ import {
 } from './teams.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
@@ -34,6 +40,12 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Serve static frontend files (production mode)
+const frontendDist = join(__dirname, '..', '..', 'frontend', 'dist');
+if (existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -236,8 +248,18 @@ app.delete('/api/teams/:teamId/members/:memberId', authMiddleware, (req, res) =>
   }
 });
 
+// Serve frontend for all non-API routes (SPA fallback)
+if (existsSync(frontendDist)) {
+  app.get('*', (req, res) => {
+    res.sendFile(join(frontendDist, 'index.html'));
+  });
+}
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`🎮 TarkovTracker API running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🎮 TarkovTracker running on http://localhost:${PORT}`);
+  if (existsSync(frontendDist)) {
+    console.log(`🌐 Frontend: http://localhost:${PORT}`);
+  }
+  console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
 });

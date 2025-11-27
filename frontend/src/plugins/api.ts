@@ -1,7 +1,7 @@
 import { reactive, ref, computed } from 'vue';
 
-// API base URL - configurable via environment variable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// API base URL - empty string means same origin (single-port setup)
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Token storage
 const TOKEN_KEY = 'tarkovtracker_token';
