@@ -23,41 +23,7 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-if="activePrimaryView == 'maps'" dense>
-      <v-col cols="12">
-        <v-card>
-          <v-tabs
-            v-model="activeMapView"
-            bg-color="accent"
-            slider-color="secondary"
-            align-tabs="center"
-            show-arrows
-          >
-            <v-tab
-              v-for="(map, index) in mergedMaps"
-              :key="index"
-              :value="map.mergedIds ? map.mergedIds[0] : map.id"
-              prepend-icon="mdi-compass"
-            >
-              <v-badge
-                :color="
-                  mapTaskTotals[map.mergedIds ? map.mergedIds[0] : map.id] > 0
-                    ? 'secondary'
-                    : 'grey'
-                "
-                :content="mapTaskTotals[map.mergedIds ? map.mergedIds[0] : map.id]"
-                :label="String(mapTaskTotals[map.mergedIds ? map.mergedIds[0] : map.id])"
-                offset-y="-5"
-                offset-x="-10"
-              >
-                {{ map.name }}
-              </v-badge>
-            </v-tab>
-          </v-tabs>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row v-else-if="activePrimaryView == 'traders'" dense>
+    <v-row v-if="activePrimaryView == 'traders'" dense>
       <v-col cols="12">
         <v-card>
           <v-tabs
@@ -207,21 +173,6 @@
       </v-col>
     </v-row>
     <v-row v-show="!loadingTasks && !reloadingTasks" justify="center">
-      <v-col v-if="activePrimaryView == 'maps'" cols="12" class="my-1">
-        <v-expansion-panels v-model="expandMap">
-          <v-expansion-panel>
-            <v-expansion-panel-title
-              >Objective Locations<span v-show="activeMapView != '55f2d3fd4bdc2d5f408b4567'"
-                >&nbsp;-&nbsp;{{ timeValue }}</span
-              ></v-expansion-panel-title
-            >
-            <v-expansion-panel-text>
-              <tarkov-map v-if="selectedMergedMap" :map="selectedMergedMap" :marks="visibleGPS" />
-              <v-alert v-else type="error">No map data available for this selection.</v-alert>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-      </v-col>
       <v-col cols="12" class="my-1">
         <task-card
           v-for="(task, taskIndex) in paginatedTasks"
@@ -256,7 +207,6 @@
   const TrackerTip = defineAsyncComponent(() => import('@/features/ui/TrackerTip'));
   const TaskCard = defineAsyncComponent(() => import('@/features/tasks/TaskCard'));
   const RefreshButton = defineAsyncComponent(() => import('@/features/ui/RefreshButton'));
-  const TarkovMap = defineAsyncComponent(() => import('@/features/maps/TarkovMap'));
   const { t } = useI18n({ useScope: 'global' });
   const userStore = useUserStore();
   const progressStore = useProgressStore();
@@ -267,11 +217,6 @@
       title: t('page.tasks.primaryviews.all'),
       icon: 'mdi-clipboard-check',
       view: 'all',
-    },
-    {
-      title: t('page.tasks.primaryviews.maps'),
-      icon: 'mdi-compass',
-      view: 'maps',
     },
     {
       title: t('page.tasks.primaryviews.traders'),

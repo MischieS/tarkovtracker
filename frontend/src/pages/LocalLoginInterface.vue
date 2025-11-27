@@ -127,8 +127,12 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { login, register, logout, currentUser } from '@/plugins/api';
+import { useTarkovStore } from '@/stores/tarkov';
+import { useTeammateStores } from '@/stores/useTeamStore';
 
 const router = useRouter();
+const tarkovStore = useTarkovStore();
+const { startAutoRefresh } = useTeammateStores();
 
 const isLogin = ref(true);
 const username = ref('');
@@ -162,6 +166,10 @@ async function handleSubmit() {
   try {
     if (isLogin.value) {
       await login(username.value, password.value);
+      // Load progress from server after login
+      await tarkovStore.loadFromServer();
+      // Start team progress auto-refresh
+      startAutoRefresh();
     } else {
       await register(username.value, password.value, displayName.value || undefined);
     }

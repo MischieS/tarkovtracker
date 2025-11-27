@@ -49,36 +49,6 @@
         hide-details
         class="mb-4"
       ></v-select>
-      <v-select
-        v-model="currentLocale"
-        prepend-icon="mdi-translate"
-        density="compact"
-        :items="localeItems"
-        :label="$t('app_bar.overflow_menu.language')"
-        variant="outlined"
-        hide-details
-        class="mb-4"
-      ></v-select>
-      <div class="d-flex align-center mb-4">
-        <v-icon class="mr-3">mdi-eye</v-icon>
-        <v-switch
-          v-model="streamerMode"
-          :disabled="Boolean(userStore.saving && userStore.saving.streamerMode)"
-          hide-details
-          density="compact"
-          color="green"
-          base-color="error"
-          :label="$t('app_bar.overflow_menu.streamer_mode')"
-          class="flex-grow-1"
-        />
-        <v-progress-circular
-          v-if="userStore.saving && userStore.saving.streamerMode"
-          indeterminate
-          color="primary"
-          size="20"
-          class="ml-2"
-        />
-      </div>
       <v-btn
         v-if="!userStore.hideAllTips"
         color="red"
@@ -300,37 +270,7 @@
     },
   });
 
-  const streamerMode = computed({
-    get() {
-      return userStore.getStreamerMode;
-    },
-    set(newValue) {
-      userStore.setStreamerMode(newValue);
-    },
-  });
-  const { availableLocales, locale } = useI18n({ useScope: 'global' });
-  const localeItems = computed(() => {
-    return availableLocales.map((localeCode) => {
-      const languageNames = new Intl.DisplayNames([localeCode], {
-        type: 'language',
-      });
-      return { title: languageNames.of(localeCode), value: localeCode };
-    });
-  });
-  const currentLocale = computed({
-    get() {
-      return (
-        localeItems.value.filter((localeItem) => localeItem.value == locale.value)[0] ||
-        localeItems.value[0]
-      );
-    },
-    // setter
-    set(newValue) {
-      const localeValue = typeof newValue === 'string' ? newValue : newValue.value;
-      locale.value = localeValue;
-      appStore.localeOverride = localeValue;
-    },
-  });
+  const { locale } = useI18n({ useScope: 'global' });
 </script>
 <style lang="scss" scoped>
   .faction-invert {

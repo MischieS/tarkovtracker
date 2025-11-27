@@ -8,11 +8,20 @@ import pinia from './plugins/pinia';
 import apolloClient from './plugins/apollo';
 import { markInitialized } from './plugins/store-initializer';
 import { markI18nReady } from '@/composables/utils/i18nHelpers';
-import { initAuth } from './plugins/api';
+import { initAuth, checkAuth, currentUser } from './plugins/api';
+import { useTeammateStores } from './stores/useTeamStore';
 import App from './App.vue';
 
-// Initialize auth from localStorage
+// Initialize auth from localStorage and load team progress
 initAuth();
+
+// After auth check completes, load team progress if logged in
+checkAuth().then(() => {
+  if (currentUser.loggedIn) {
+    const { startAutoRefresh } = useTeammateStores();
+    startAutoRefresh();
+  }
+});
 
 // Create app instance
 const app = createApp(App);
