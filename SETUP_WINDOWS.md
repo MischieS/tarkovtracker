@@ -1,224 +1,273 @@
-# TarkovTracker - Windows Server Setup Guide
+# TarkovTracker - Windows Setup Guide
 
-This guide covers deploying TarkovTracker on a Windows Server.
+Simple plug-and-serve setup. Single port, no Docker required.
 
 ---
 
 ## Prerequisites
 
-- **Windows Server 2019/2022** or Windows 10/11
-- **Administrator access**
-- **Minimum 2GB RAM**, 10GB disk space
+- **Windows 10/11** or Windows Server 2019/2022
+- **Node.js 20+** - Download from [nodejs.org](https://nodejs.org/)
+- **Git** (optional) - Download from [git-scm.com](https://git-scm.com/download/win)
 
 ---
 
-## Option 1: Docker Desktop (Recommended)
+## Quick Setup
 
-### Step 1: Install Docker Desktop
-
-1. Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop/)
-2. Run the installer and follow prompts
-3. Restart your computer when prompted
-4. Launch Docker Desktop and wait for it to start
-
-### Step 2: Install Git (Optional)
-
-Download and install Git from [git-scm.com](https://git-scm.com/download/win)
-
-### Step 3: Clone or Copy the Project
+### Step 1: Get the Code
 
 ```powershell
 # Using Git
-git clone <your-repo-url> C:\TarkovTracker
+git clone https://github.com/MischieS/tarkovtracker.git C:\TarkovTracker
 cd C:\TarkovTracker
 
-# Or copy files manually to C:\TarkovTracker
+# Or download and extract ZIP to C:\TarkovTracker
 ```
 
-### Step 4: Configure Environment
+### Step 2: Install & Run
 
 ```powershell
-# Copy the example environment file
-copy .env.example .env
-
-# Edit .env with notepad or your preferred editor
-notepad .env
-```
-
-Update the `.env` file:
-```env
-# Generate a secure secret (use PowerShell)
-# [System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-JWT_SECRET=your-generated-secret-here
-
-# Set your server's IP or domain
-API_URL=http://YOUR_SERVER_IP:3001
-```
-
-### Step 5: Build and Run
-
-```powershell
-# Build the containers
-docker-compose build
-
-# Start the services
-docker-compose up -d
-
-# Check status
-docker-compose ps
-```
-
-### Step 6: Configure Windows Firewall
-
-```powershell
-# Run as Administrator
-New-NetFirewallRule -DisplayName "TarkovTracker HTTP" -Direction Inbound -Port 80 -Protocol TCP -Action Allow
-New-NetFirewallRule -DisplayName "TarkovTracker API" -Direction Inbound -Port 3001 -Protocol TCP -Action Allow
-```
-
-### Step 7: Verify Installation
-
-- Frontend: `http://localhost` or `http://YOUR_SERVER_IP`
-- API Health: `http://localhost:3001/api/health`
-
----
-
-## Option 2: Native Node.js Installation
-
-### Step 1: Install Node.js
-
-1. Download Node.js 20+ LTS from [nodejs.org](https://nodejs.org/)
-2. Run the installer with default options
-3. Verify installation:
-   ```powershell
-   node --version  # Should show v20.x.x or higher
-   npm --version
-   ```
-
-### Step 2: Clone or Copy the Project
-
-```powershell
-cd C:\
-git clone <your-repo-url> TarkovTracker
-cd TarkovTracker
-```
-
-### Step 3: Install Dependencies
-
-```powershell
+# Install dependencies
 npm install
+
+# Build frontend and start server
+npm run serve
 ```
 
-### Step 4: Configure Environment
+**Done!** Open http://localhost:3000
+
+---
+
+## Configuration (Optional)
+
+Create a `.env` file in the project root:
 
 ```powershell
 copy .env.example .env
 notepad .env
 ```
 
-Update `.env`:
 ```env
-JWT_SECRET=your-secure-secret-here
-API_URL=http://YOUR_SERVER_IP:3001
+# Server port (default: 3000)
+PORT=3000
+
+# JWT Secret - CHANGE THIS for security!
+JWT_SECRET=your-super-secret-key-here
+
+# Custom data directory (optional)
+# DATA_DIR=C:\TarkovTracker\data
 ```
 
-### Step 5: Build Frontend
-
+Generate a secure JWT secret in PowerShell:
 ```powershell
-npm run build
-```
-
-### Step 6: Install and Configure IIS (for Frontend)
-
-1. Open **Server Manager** → **Add Roles and Features**
-2. Select **Web Server (IIS)**
-3. Install with default features
-
-Configure IIS:
-1. Open **IIS Manager**
-2. Create a new website pointing to `C:\TarkovTracker\frontend\dist`
-3. Set binding to port 80
-
-### Step 7: Run the API Server
-
-```powershell
-cd C:\TarkovTracker
-npm run start
-```
-
-### Step 8: Create Windows Service (Optional)
-
-Install [NSSM](https://nssm.cc/) to run the API as a service:
-
-```powershell
-# Download NSSM and add to PATH, then:
-nssm install TarkovTrackerAPI "C:\Program Files\nodejs\node.exe" "C:\TarkovTracker\server\src\index.js"
-nssm set TarkovTrackerAPI AppDirectory "C:\TarkovTracker\server"
-nssm start TarkovTrackerAPI
+[System.Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
 ---
 
-## Managing the Application
+## Windows Firewall Setup
 
-### Docker Commands
+### Allow Port Through Firewall (Required for Network Access)
+
+**Option 1: PowerShell (Run as Administrator)**
 
 ```powershell
-# View logs
-docker-compose logs -f
-
-# Restart services
-docker-compose restart
-
-# Stop services
-docker-compose down
-
-# Update and rebuild
-git pull
-docker-compose build --no-cache
-docker-compose up -d
+# Allow port 3000 (or your custom port)
+New-NetFirewallRule -DisplayName "TarkovTracker" -Direction Inbound -Port 3000 -Protocol TCP -Action Allow
 ```
 
-### Backup Data
+**Option 2: Windows Firewall GUI**
+
+1. Press `Win + R`, type `wf.msc`, press Enter
+2. Click **Inbound Rules** → **New Rule...**
+3. Select **Port** → Next
+4. Select **TCP**, enter **3000** → Next
+5. Select **Allow the connection** → Next
+6. Check all profiles (Domain, Private, Public) → Next
+7. Name it **TarkovTracker** → Finish
+
+### Verify Firewall Rule
 
 ```powershell
-# Docker volume backup
-docker run --rm -v tarkovtracker_api-data:/data -v C:\Backups:/backup alpine tar czf /backup/tarkovtracker-backup.tar.gz -C /data .
+# List firewall rules for TarkovTracker
+Get-NetFirewallRule -DisplayName "*TarkovTracker*" | Format-Table Name, Enabled, Direction, Action
 
-# Native installation
-copy C:\TarkovTracker\server\data\tarkovtracker.db C:\Backups\
+# Check if port is listening
+netstat -an | findstr :3000
+```
+
+---
+
+## Firewall Troubleshooting
+
+### Problem: Can't access from other devices on network
+
+**Check 1: Is the server running?**
+```powershell
+# Should show LISTENING on port 3000
+netstat -an | findstr :3000
+```
+
+**Check 2: Is firewall rule active?**
+```powershell
+Get-NetFirewallRule -DisplayName "TarkovTracker" | Select-Object Enabled
+# Should show: True
+```
+
+**Check 3: Test local access first**
+```powershell
+# This should work
+curl http://localhost:3000/api/health
+```
+
+**Check 4: Find your local IP**
+```powershell
+ipconfig | findstr "IPv4"
+# Use this IP from other devices: http://YOUR_IP:3000
+```
+
+**Check 5: Disable firewall temporarily (for testing only)**
+```powershell
+# Temporarily disable Windows Firewall (run as admin)
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+# Re-enable after testing!
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+```
+
+### Problem: Port already in use
+
+```powershell
+# Find what's using port 3000
+netstat -ano | findstr :3000
+
+# Kill the process (replace PID with actual number)
+taskkill /PID <PID> /F
+
+# Or change port in .env file
+PORT=3001
+```
+
+### Problem: Antivirus blocking connections
+
+Some antivirus software has its own firewall. Check:
+- Windows Defender (usually fine)
+- Norton, McAfee, Kaspersky, etc. - add exception for Node.js or port 3000
+
+### Problem: Network profile is Public
+
+Windows is more restrictive on Public networks:
+
+```powershell
+# Check network profile
+Get-NetConnectionProfile
+
+# Change to Private (more permissive)
+Set-NetConnectionProfile -InterfaceAlias "Ethernet" -NetworkCategory Private
+# Replace "Ethernet" with your adapter name
+```
+
+---
+
+## Run as Windows Service
+
+To run TarkovTracker automatically on startup:
+
+### Option 1: Task Scheduler
+
+1. Open **Task Scheduler** (`taskschd.msc`)
+2. Click **Create Task...**
+3. **General tab**: Name it "TarkovTracker", check "Run whether user is logged on or not"
+4. **Triggers tab**: Add trigger → "At startup"
+5. **Actions tab**: Add action:
+   - Program: `C:\Program Files\nodejs\node.exe`
+   - Arguments: `C:\TarkovTracker\server\src\index.js`
+   - Start in: `C:\TarkovTracker\server`
+6. Click OK and enter your password
+
+### Option 2: NSSM (Non-Sucking Service Manager)
+
+1. Download [NSSM](https://nssm.cc/download)
+2. Extract to `C:\nssm`
+3. Run as Administrator:
+
+```powershell
+C:\nssm\win64\nssm.exe install TarkovTracker "C:\Program Files\nodejs\node.exe" "C:\TarkovTracker\server\src\index.js"
+C:\nssm\win64\nssm.exe set TarkovTracker AppDirectory "C:\TarkovTracker\server"
+C:\nssm\win64\nssm.exe start TarkovTracker
+```
+
+Manage the service:
+```powershell
+# Check status
+sc query TarkovTracker
+
+# Stop/Start
+net stop TarkovTracker
+net start TarkovTracker
+
+# Remove service
+C:\nssm\win64\nssm.exe remove TarkovTracker confirm
+```
+
+---
+
+## Development Mode
+
+For development with hot-reload:
+
+```powershell
+npm run dev
+```
+
+This starts:
+- Frontend: http://localhost:5173 (with hot reload)
+- Backend: http://localhost:3000
+
+---
+
+## Updating
+
+```powershell
+cd C:\TarkovTracker
+git pull
+npm install
+npm run serve
+```
+
+---
+
+## Backup
+
+Your data is stored in `server\data\tarkovtracker.json`
+
+```powershell
+# Manual backup
+copy C:\TarkovTracker\server\data\tarkovtracker.json C:\Backups\tarkovtracker-backup.json
 ```
 
 ---
 
 ## Troubleshooting
 
-### Docker won't start
-- Ensure Hyper-V and WSL2 are enabled
-- Run: `wsl --update`
-
-### Port already in use
+### Check if Node.js is installed
 ```powershell
-netstat -ano | findstr :80
-netstat -ano | findstr :3001
-# Kill process: taskkill /PID <PID> /F
+node --version
+# Should show v20.x.x or higher
 ```
 
-### Check Docker logs
+### Check server logs
+The server outputs logs to the console. If running as a service, check:
 ```powershell
-docker-compose logs api
-docker-compose logs frontend
+# NSSM logs
+C:\nssm\win64\nssm.exe status TarkovTracker
 ```
 
-### Firewall issues
-Ensure Windows Firewall rules are created (see Step 6 in Docker setup).
-
----
-
-## Security Recommendations
-
-1. **Change the JWT_SECRET** to a strong, random value
-2. **Use HTTPS** in production with a reverse proxy (nginx, IIS with SSL)
-3. **Keep Windows updated** with security patches
-4. **Restrict firewall rules** to specific IP ranges if possible
-5. **Regular backups** of the database volume
+### Reset everything
+```powershell
+cd C:\TarkovTracker
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Recurse -Force frontend\dist
+npm install
+npm run serve
+```
